@@ -1,0 +1,98 @@
+#!/bin/sh
+
+CURWDIR="$(cd $(dirname $0) && pwd)"
+TITLE="花生壳"
+PROGRAM_NAME="peanuthull"
+CUSTOM_BIN="/system/apps/tp/bin/custom"
+CUSTOM_zm="/system/apps/tp/bin/mochuiLauncher"
+CUSTOM_CONFIG_FILE="$CURWDIR/custom.conf"
+SETCONF="$CURWDIR/config-file.conf"
+
+USERID=`head -n 1 $SETCONF | cut -d ' ' -f2-`;
+PASSWORD=`head -n 2 $SETCONF | tail -n 1 | cut -d ' ' -f2-`;
+
+
+APPS_CONFIG_DIR="/data/conf"
+LAUNCHER_CONFIG_DIR="$APPS_CONFIG_DIR/launcher/conf.d"
+LAUNCHER_CONFIG_FILE="$LAUNCHER_CONFIG_DIR/$PROGRAM_NAME.conf"
+
+ICON="pressed.png"
+PRESSED_ICON="normal.png"
+
+PID_FILE="$CURWDIR/$PROGRAM_NAME.pid"
+PKILL_BIN="/usr/bin/pkill"
+INSTALL_BIN="/usr/bin/install"
+REMOVE="/bin/rm -f"
+
+usage() {
+    echo "ERROR: action missing"
+    echo "syntax: $0 <start|stop|restart|status|config|install|uninstall>"
+    echo "example: $0 start"
+}
+
+start() {
+    killall phddns 1/dev/null 2>&1
+    $CURWDIR/bin/phddns $USERID $PASSWORD &
+    $CUSTOM_BIN "$CUSTOM_CONFIG_FILE" &
+    [ "$!""XXX" != "XXX" ] && echo "$!" > $PID_FILE
+}
+
+stop() {
+    killall phddns 1/dev/null 2>&1
+    $REMOVE /tmp/dnsstat
+    $REMOVE /tmp/tem
+    if [ -f $PID_FILE ]; then
+        $PKILL_BIN "$CUSTOM_BIN $CUSTOM_CONFIG_FILE" -F "$PID_FILE"
+        $REMOVE $PID_FILE
+    fi
+}
+
+install() {
+    echo "{" > "$PROGRAM_NAME.conf"
+    echo "\"name\" :  \"$TITLE\"," >> "$PROGRAM_NAME.conf"
+    echo "\"icon\" : \"$CURWDIR/$ICON\"," >> "$PROGRAM_NAME.conf"
+    echo "\"iconPressed\" : \"$CURWDIR/$PRESSED_ICON\"," >> "$PROGRAM_NAME.conf"
+    echo "\"exec\" : \"$CURWDIR/phddns.sh tpstart\"," >> "$PROGRAM_NAME.conf"
+    echo "\"msgNum\" : 4" >> "$PROGRAM_NAME.conf"
+    echo "}" >> "$PROGRAM_NAME.conf"
+
+    $INSTALL_BIN -d $LAUNCHER_CONFIG_DIR
+    $INSTALL_BIN "$PROGRAM_NAME.conf" "$LAUNCHER_CONFIG_FILE"
+    $REMOVE /peanuthull.conf
+}
+
+config(){
+    return 0;
+}
+
+uninstall() {
+    $PKILL_BIN phddns
+    $REMOVE /tmp/tem
+    $REMOVE /tmp/oray_log.log
+    $REMOVE /tmp/dnsstat
+    $REMOVE "$LAUNCHER_CONFIG_FILE"
+}
+
+# main
+if [ $# -lt 1 ]; then
+    usage
+    exit 255
+fi
+
+case "$1" in
+    "start" )
+        start;;
+    "stop" )
+        stop;;
+    "restart" )
+        start
+        stop;;
+    "install" )
+        install;;
+    "config" )
+        config;;
+    "uninstall" )
+        uninstall;;
+    * )
+        usage ;;
+esac

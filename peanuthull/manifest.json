@@ -1,0 +1,13 @@
+{
+"package_id"      : "com.modou.phddns",
+"name"            : "花生壳",
+"author"          : "Oray",
+"author_mail"	  : "Oray@oray.com"
+"homepage"        : "www.oray.com",
+"version"         : "0.1",
+"release_date"    : "2014.09.26",
+"icon"            : "./images/peanuthull.png",
+"location"        : "internal",
+"description"     : "花生壳动态域名解析",
+"instruction"     : "1xxxxxx,2xxxxxx"
+}
